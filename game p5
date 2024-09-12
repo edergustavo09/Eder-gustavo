@@ -1,0 +1,136 @@
+let player;
+let obstacles = [];
+let score = 0;
+let gameOver = false;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  player = new Player();
+  
+  // Adicionar suporte a toque para dispositivos móveis
+  touchStarted = function() {
+    if (gameOver) {
+      resetGame();
+    }
+    return false; // Evitar ações padrão de toque
+  }
+}
+
+function draw() {
+  background(220);
+  
+  if (!gameOver) {
+    // Mover e exibir jogador
+    player.move();
+    player.show();
+    
+    // Adicionar novos obstáculos
+    if (frameCount % 60 === 0) {
+      obstacles.push(new Obstacle());
+    }
+    
+    // Mover e exibir obstáculos
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      obstacles[i].move();
+      obstacles[i].show();
+      
+      // Verificar colisão
+      if (obstacles[i].hits(player)) {
+        gameOver = true;
+        noLoop();  // Parar o loop do jogo
+      }
+      
+      // Remover obstáculos fora da tela
+      if (obstacles[i].offScreen()) {
+        obstacles.splice(i, 1);
+        score++;
+      }
+    }
+    
+    // Exibir pontuação
+    fill(0);
+    textSize(24);
+    text("Score: " + score, 10, 30);
+  } else {
+    // Mensagem de fim de jogo
+    fill(0);
+    textSize(48);
+    textAlign(CENTER, CENTER);
+    text("Game Over", width / 2, height / 2);
+    textSize(24);
+    text("Score: " + score, width / 2, height / 2 + 40);
+  }
+}
+
+function touchMoved() {
+  // Controlar o movimento do jogador com o toque
+  if (!gameOver) {
+    player.x = mouseX;
+    player.x = constrain(player.x, 0, width - player.size);
+  }
+  return false; // Evitar ações padrão de toque
+}
+
+function keyPressed() {
+  if (key === ' ') {
+    if (gameOver) {
+      resetGame();
+    }
+  }
+}
+
+function resetGame() {
+  obstacles = [];
+  score = 0;
+  gameOver = false;
+  loop();  // Retomar o loop do jogo
+}
+
+class Player {
+  constructor() {
+    this.x = width / 2;
+    this.y = height - 30;
+    this.size = 20;
+    this.speed = 5;
+  }
+  
+  move() {
+    // No mobile, o movimento é controlado pelo toque
+  }
+  
+  show() {
+    fill(0, 0, 255);
+    noStroke();
+    rect(this.x, this.y, this.size, this.size);
+  }
+}
+
+class Obstacle {
+  constructor() {
+    this.x = random(width);
+    this.y = 0;
+    this.size = 20;
+    this.speed = 5;
+  }
+  
+  move() {
+    this.y += this.speed;
+  }
+  
+  show() {
+    fill(255, 0, 0);
+    noStroke();
+    rect(this.x, this.y, this.size, this.size);
+  }
+  
+  hits(player) {
+    return !(this.x > player.x + player.size ||
+             this.x + this.size < player.x ||
+             this.y > player.y + player.size ||
+             this.y + this.size < player.y);
+  }
+  
+  offScreen() {
+    return this.y > height;
+  }
+}
